@@ -14,6 +14,21 @@ def production_env() -> dict[str, str]:
     }
 
 
+def test_allowed_hosts_are_exact_canonical_names_without_wildcards() -> None:
+    settings = Settings.from_env(
+        production_env() | {"SONDA_ALLOWED_HOSTS": "EXAMPLE.com,exemplo.рф"}
+    )
+    assert settings.allowed_hosts == frozenset({"example.com", "exemplo.xn--p1ai"})
+    for hosts in ["*.example.com", "localhost", "127.0.0.1", "example.com,", "https://example.com"]:
+        with pytest.raises(ValueError):
+            Settings.from_env(production_env() | {"SONDA_ALLOWED_HOSTS": hosts})
+
+
+def test_app_origin_is_canonical_for_browser_origin_and_internal_targets() -> None:
+    settings = Settings.from_env(production_env() | {"APP_URL": "https://EXEMPLO.рф:443/"})
+    assert settings.app_url == "https://exemplo.xn--p1ai"
+
+
 @pytest.mark.parametrize(
     "override",
     [

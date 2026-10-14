@@ -2,6 +2,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
+from sonda.targets.policy import canonical_host
+
 
 def _boolean(environ: Mapping[str, str], name: str, default: bool) -> bool:
     value = environ.get(name)
@@ -25,6 +27,7 @@ class Settings:
     trust_vercel_ingress: bool
     vercel_runtime: bool
     port: int
+    allowed_hosts: frozenset[str] = frozenset()
 
     @property
     def production(self) -> bool:
@@ -86,9 +89,21 @@ class Settings:
                 raise ValueError()
         except ValueError as error:
             raise ValueError("PORT must be an integer between 1 and 65535") from error
+        assert origin.hostname is not None
+        try:
+            host = (
+                canonical_host(origin.hostname)
+                if production
+                else origin.hostname.encode("idna").decode("ascii").lower()
+            )
+        except (ValueError, UnicodeError):
+            raise ValueError("APP_URL must contain a valid hostname") from None
+        authority = f"[{host}]" if ":" in host else host
+        if origin.port is not None and origin.port != (443 if origin.scheme == "https" else 80):
+            authority += f":{origin.port}"
         return cls(
             environment=environment,
-            app_url=f"{origin.scheme}://{origin.netloc}",
+            app_url=f"{origin.scheme}://{authority}",
             database_url=database_url,
             database_tls=tls,
             session_secret=session_secret,
@@ -98,4 +113,10 @@ class Settings:
             trust_vercel_ingress=_boolean(environ, "TRUST_VERCEL_INGRESS", False),
             vercel_runtime=environ.get("VERCEL") == "1",
             port=port,
+            allowed_hosts=frozenset(
+                canonical_host(host.strip())
+                for host in environ.get("SONDA_ALLOWED_HOSTS", "").split(",")
+            )
+            if environ.get("SONDA_ALLOWED_HOSTS", "")
+            else frozenset(),
         )

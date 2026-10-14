@@ -14,7 +14,7 @@ A fundação implementa configuração estrita, conexões PostgreSQL com TLS ver
 em produção, migrations transacionais com checksum e `/health/ready`.
 Não aplica migrations nem cria usuários durante o startup.
 
-Passaram 64 testes locais. Os testes de integração usam o banco `sonda_test`
+Passaram 112 testes locais. Os testes de integração usam o banco `sonda_test`
 e schemas temporários próprios.
 Um processo HTTP separado verifica prontidão 503 antes das migrations e 200 depois,
 sem reiniciar o servidor. Testes também verificam configuração de produção,
@@ -31,7 +31,12 @@ regeneradas. Alterar a senha revoga o acesso anterior, inclusive quando uma
 verificação da senha antiga ainda está em andamento. A coleta usa lotes limitados
 e pula ambientes com operações em andamento.
 
-Verificações HTTP, incidentes e interface ainda não estão implementados.
+O transporte HTTP já verifica destinos autorizados, rejeita DNS privado, fixa
+os IPs validados no conector e verifica TLS. Chamadas reais às fixtures devolvem
+200 ou 503 conforme o cenário no banco. Redirecionamentos, timeout e certificados
+foram testados em servidores locais. [Regras e evidências de rede](docs/network.md).
+
+Persistência de verificações, incidentes e interface ainda não estão implementados.
 Não há demonstração publicada ou resultado comercial a alegar.
 
 ## Executar a fundação

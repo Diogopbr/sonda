@@ -46,3 +46,11 @@ Inícios: 10 por minuto/IP. Login: 10 por minuto/IP, incluindo tentativas invál
 Reset: 1 por minuto/visitante e 10 por hora/IP; a propriedade é verificada antes
 de consumir esses limites. Contadores usam janelas fixas e relógio PostgreSQL.
 Verificações e seus limites ainda não fazem parte das rotas implementadas.
+
+## Alvos internos da demonstração
+
+GET `/probe/{uuid}` exige `X-Sonda-Probe`, um segredo interno distinto do de
+sessão. Autenticação ocorre antes da consulta ao monitor. Sem esse segredo,
+monitor inexistente, geração revogada ou vencida retornam 404 sem dados de ambiente.
+Um alvo válido devolve corpo vazio e 200 ou 503 conforme `fixture_mode` no banco,
+com `Cache-Control: no-store`. Essa rota não aceita alterações administrativas.

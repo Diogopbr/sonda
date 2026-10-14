@@ -10,6 +10,7 @@ from sonda.http.access import Access, access_router
 from sonda.http.body import BodyLimitMiddleware
 from sonda.http.errors import HttpError, error_response
 from sonda.http.gateway import GatewayMiddleware
+from sonda.http.probe import probe_router
 from sonda.http.security import SecurityHeadersMiddleware
 from sonda.version import LATEST_MIGRATION
 
@@ -20,6 +21,7 @@ def create_app(settings: Settings, db: Database) -> FastAPI:
     app.add_middleware(GatewayMiddleware, settings=settings)
     app.add_middleware(SecurityHeadersMiddleware)
     app.include_router(access_router(Access(settings, db)))
+    app.include_router(probe_router(settings, db))
 
     @app.exception_handler(HttpError)
     async def domain_error(request: Request, error: HttpError) -> JSONResponse:
@@ -30,7 +32,7 @@ def create_app(settings: Settings, db: Database) -> FastAPI:
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         response = await call_next(request)
-        if request.url.path.startswith("/api/"):
+        if request.url.path.startswith(("/api/", "/probe/")):
             response.headers["Cache-Control"] = "no-store"
         return response
 
