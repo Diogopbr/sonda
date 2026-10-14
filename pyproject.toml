@@ -1,0 +1,31 @@
+[project]
+name = "sonda"
+version = "0.1.0"
+description = "Verificações HTTP e histórico de incidentes"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "fastapi==0.143.0",
+  "pydantic==2.14.1",
+  "psycopg[binary]==3.3.6",
+  "aiohttp==3.14.5",
+  "uvicorn==0.54.0",
+  "certifi==2026.7.22",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["sonda", "scripts"]
