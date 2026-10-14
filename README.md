@@ -5,7 +5,7 @@ PostgreSQL. Projeto de portfólio de Diogo Pereira, em implementação.
 
 O percurso definido verifica um serviço, abre um incidente após duas falhas
 consecutivas, registra o reconhecimento de um operador e confirma a recuperação
-após duas respostas saudáveis. A demonstração usará alvos fictícios controlados
+após duas respostas saudáveis. A demonstração usa alvos fictícios controlados
 pelo projeto, com chamadas HTTP reais e ambientes separados por visitante.
 
 ## Estado atual
@@ -14,7 +14,7 @@ A fundação implementa configuração estrita, conexões PostgreSQL com TLS ver
 em produção, migrations transacionais com checksum e `/health/ready`.
 Não aplica migrations nem cria usuários durante o startup.
 
-Passaram 144 testes locais. Os testes de integração usam o banco `sonda_test`
+Passaram 146 testes locais de backend. Os testes de integração usam o banco `sonda_test`
 e schemas temporários próprios.
 Um processo HTTP separado verifica prontidão 503 antes das migrations e 200 depois,
 sem reiniciar o servidor. Testes também verificam configuração de produção,
@@ -51,12 +51,23 @@ O runner executa uma vez, em lotes de até dez monitores administrados, com
 SKIP LOCKED e até quatro execuções simultâneas. Não executa demos em background.
 Dois processos verificaram lotes distintos, sem repetir o mesmo monitor.
 
-A interface, CI e demonstração hospedada ainda não estão implementadas.
+A interface Svelte apresenta serviços, respostas HTTP, evidências e histórico de
+incidentes. Selecionar uma observação identifica seu papel na primeira falha,
+confirmação ou recuperação. Conflitos entre abas exigem revisão explícita e
+preservam comentários; reiniciar a demo invalida a geração anterior.
+
+Passaram 19 testes de interface e cinco percursos locais de navegador, usando
+PostgreSQL e requisições HTTP reais: ciclo completo, isolamento entre visitantes,
+conflito entre abas, reset com rascunho preservado e teclado no celular. As oito
+capturas de desktop e celular passaram na análise automatizada WCAG A/AA, sem
+rolagem horizontal. Essas verificações não substituem a revisão independente.
+
+A revisão independente, CI e demonstração hospedada ainda estão pendentes.
 Não há demonstração publicada ou resultado comercial a alegar.
 
 ## Executar a fundação
 
-Requisitos: Python 3.13 e PostgreSQL 17. Crie um ambiente virtual e instale as
+Requisitos: Python 3.13, Node.js 24.15 e PostgreSQL 17. Crie um ambiente virtual e instale as
 dependências fixadas:
 
 ```powershell
@@ -70,6 +81,10 @@ credenciais próprios. O arquivo de exemplo não é carregado automaticamente.
 Produção exige `SONDA_ENV=production`, HTTPS e `DB_TLS=true`.
 
 ```powershell
+cd frontend
+npm ci
+npm run build
+cd ..
 ./.venv/Scripts/python.exe -m scripts.migrate
 ./.venv/Scripts/python.exe -m scripts.dev
 ```

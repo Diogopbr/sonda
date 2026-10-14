@@ -6,6 +6,7 @@
 /.vercel/
 /node_modules/
 /frontend/node_modules/
+/frontend/.local/
 /public/
 /dist/
 __pycache__/
@@ -21,6 +22,8 @@ htmlcov/
 !.env.example
 *.log
 /test-results/
+/frontend/test-results/
+/frontend/playwright-report/
 /playwright-report/
 /AGENTS.md
 /docs/superpowers/plans/

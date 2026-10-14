@@ -1,4 +1,5 @@
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -8,6 +9,7 @@ from starlette.responses import Response
 from sonda.config import Settings
 from sonda.db import Database
 from sonda.http.access import Access, access_router
+from sonda.http.assets import attach_assets
 from sonda.http.body import BodyLimitMiddleware
 from sonda.http.errors import HttpError, error_response
 from sonda.http.gateway import GatewayMiddleware
@@ -17,7 +19,9 @@ from sonda.http.security import SecurityHeadersMiddleware
 from sonda.version import LATEST_MIGRATION
 
 
-def create_app(settings: Settings, db: Database) -> FastAPI:
+def create_app(
+    settings: Settings, db: Database, *, assets_directory: Path | None = None
+) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
     app.add_middleware(BodyLimitMiddleware)
     app.add_middleware(GatewayMiddleware, settings=settings)
@@ -26,6 +30,8 @@ def create_app(settings: Settings, db: Database) -> FastAPI:
     app.include_router(access_router(access))
     app.include_router(product_router(access))
     app.include_router(probe_router(settings, db))
+    if assets_directory is not None:
+        attach_assets(app, assets_directory)
 
     @app.exception_handler(HttpError)
     async def domain_error(request: Request, error: HttpError) -> JSONResponse:

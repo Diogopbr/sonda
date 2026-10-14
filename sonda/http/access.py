@@ -90,6 +90,13 @@ class Access:
 def access_router(access: Access) -> APIRouter:
     router = APIRouter(prefix="/api")
 
+    @router.get("/capabilities")
+    async def capabilities() -> dict[str, bool]:
+        return {
+            "demo_enabled": access.settings.demo_enabled,
+            "login_enabled": access.settings.login_enabled,
+        }
+
     @router.get("/auth/csrf")
     async def csrf(request: Request) -> JSONResponse:
         session = await access.current(request)

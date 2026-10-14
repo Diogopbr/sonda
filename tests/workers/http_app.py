@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import uvicorn
@@ -17,7 +18,11 @@ if (
     or url.username != "sonda_test"
 ):
     raise RuntimeError("HTTP test worker requires isolated sonda_test")
-app = create_app(settings, Database(settings, sys.argv[1]))
+app = create_app(
+    settings,
+    Database(settings, sys.argv[1]),
+    assets_directory=Path(__file__).resolve().parents[2] / "public",
+)
 uvicorn.run(
     app,
     host="127.0.0.1",
