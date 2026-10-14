@@ -1,7 +1,7 @@
 # HTTP do Sonda
 
-Este contrato registra as rotas implementadas. Verificações e incidentes serão
-acrescentados quando suas regras e persistência estiverem prontas.
+Este contrato registra as rotas implementadas. A demonstração usa alvos fictícios
+controlados pelo Sonda e realiza chamadas HTTP reais.
 
 ## Sessões e comandos
 
@@ -18,6 +18,8 @@ obtido em `/api/auth/csrf`. Comandos vinculados ao ambiente também precisam de
 `X-Sonda-Workspace`, capturado antes de obter o CSRF. Esse valor é uma expectativa
 de geração, nunca um seletor de autorização: a sessão do banco determina o acesso.
 Uma geração diferente é recusada antes do CSRF com 404.
+Leituras de recursos também recusam uma expectativa de geração diferente quando
+esse header é enviado. A consulta de autenticação permite recuperar a geração atual.
 
 | Método e rota | Resultado |
 | --- | --- |
@@ -29,9 +31,18 @@ Uma geração diferente é recusada antes do CSRF com 404.
 | POST `/api/auth/logout` | 200 `{signed_out:true}`; exige geração e invalida a sessão |
 | GET `/api/monitors` | 200 `{monitors:[...]}` do ambiente autorizado |
 | GET `/api/monitors/{uuid}` | 200 com serviço autorizado; 404 para outro ambiente |
+| PATCH `/api/monitors/{uuid}` | 200 com serviço atualizado; JSON `{expected_version,enabled?,fixture_mode?}` |
+| POST `/api/monitors/{uuid}/checks` | JSON `{key:uuid}`; 200 com resultado ou 202 com replay ainda pending |
+| GET `/api/checks/{uuid}` | 200 com tentativa autorizada |
+| GET `/api/incidents/{uuid}` | 200 com incidente, evidências e eventos |
+| POST `/api/incidents/{uuid}/ack` | JSON `{expected_version,comment}`; 200 com reconhecimento |
 
-As projeções iniciais de monitor contêm `id`, `name`, `enabled`, `observed_state`,
-`version`, `failure_streak` e `success_streak`. Não há resultados inventados.
+Projeções de monitor contêm `id`, `name`, `target_kind`, `target_url`,
+`interval_seconds`, `fixture_mode`, `enabled`, `observed_state`, `version`,
+`failure_streak`, `success_streak`, `last_check` e `active_incident`.
+O detalhe acrescenta `checks` (até 60 mais recentes), `history_limit:60`,
+`incidents` (até 20 mais recentes, incluindo resolvidos) e `incident_history_limit:20`.
+Não há resultados inventados, token de lease ou segredo interno nessas projeções.
 Datas são ISO 8601 com zona UTC. Identificadores são UUID.
 
 ## Erros e limites
@@ -45,7 +56,20 @@ Não há cadastro público. Flags de demo/login desabilitadas retornam 404.
 Inícios: 10 por minuto/IP. Login: 10 por minuto/IP, incluindo tentativas inválidas.
 Reset: 1 por minuto/visitante e 10 por hora/IP; a propriedade é verificada antes
 de consumir esses limites. Contadores usam janelas fixas e relógio PostgreSQL.
-Verificações e seus limites ainda não fazem parte das rotas implementadas.
+Verificações: 6 por minuto/visitante e 60 tentativas aceitas por geração, incluindo
+abandonadas. Replays não consomem outro limite. Quota total retorna 429 DEMO_QUOTA,
+com prazo restante da geração em Retry-After. Alteração de cenário, pausa e
+reconhecimento: 30 por minuto/visitante. Alvos normais são imutáveis na API.
+
+Versão antiga retorna 409 VERSION_CONFLICT com `current`. Lease em andamento
+retorna 409 CHECK_RUNNING. Chave vinculada a outro monitor retorna 409
+IDEMPOTENCY_CONFLICT. Resultado atrasado retorna 410 CHECK_SUPERSEDED.
+Monitor pausado recusa nova execução com 409 MONITOR_PAUSED.
+
+Reconhecimento exige comentário de 3 a 500 caracteres e versão atual; não resolve
+o incidente. Incidentes reconhecidos ou resolvidos recusam outro reconhecimento
+com 409 INCIDENT_READONLY. Duas falhas abrem o incidente; dois sucessos
+consecutivos o resolvem. Evidências e eventos permanecem na consulta do incidente.
 
 ## Alvos internos da demonstração
 

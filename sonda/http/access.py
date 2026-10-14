@@ -11,11 +11,12 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
 from sonda.access.cleanup import collect_expired
 from sonda.access.demo import DemoService
 from sonda.access.normal import LoginService
-from sonda.access.scope import Scope, with_workspace
+from sonda.access.scope import Scope
 from sonda.access.sessions import IssuedSession, SessionRecord, SessionService
 from sonda.config import Settings
 from sonda.db import Database
 from sonda.http.errors import HttpError
+from sonda.monitors.service import MonitorService
 
 SESSION_COOKIE = "sonda_session"
 VISITOR_COOKIE = "sonda_visitor"
@@ -34,6 +35,7 @@ class Access:
         self.sessions = SessionService(db)
         self.demo = DemoService(db)
         self.login = LoginService(db)
+        self.monitors = MonitorService(db)
 
     async def current(self, request: Request) -> SessionRecord | None:
         if not hasattr(request.state, "session"):
@@ -44,6 +46,9 @@ class Access:
     async def scope(self, request: Request) -> Scope:
         session = await self.current(request)
         if session is None or session.scope is None:
+            raise HttpError(404, "NOT_FOUND", "Ambiente não encontrado ou encerrado.")
+        expected = request.headers.get("x-sonda-workspace")
+        if expected is not None and expected != session.scope.id:
             raise HttpError(404, "NOT_FOUND", "Ambiente não encontrado ou encerrado.")
         return session.scope
 
@@ -185,29 +190,11 @@ def access_router(access: Access) -> APIRouter:
     @router.get("/monitors")
     async def monitors(request: Request) -> dict[str, Any]:
         scope = await access.scope(request)
-        async with with_workspace(access.db, scope) as connection:
-            rows = await (
-                await connection.execute(
-                    "SELECT id,name,enabled,observed_state,version,failure_streak,success_streak "
-                    "FROM monitors WHERE workspace_id=%s ORDER BY name",
-                    (scope.id,),
-                )
-            ).fetchall()
-        return {"monitors": rows}
+        return {"monitors": await access.monitors.list(scope)}
 
     @router.get("/monitors/{monitor_id}")
     async def monitor(request: Request, monitor_id: UUID) -> dict[str, Any]:
         scope = await access.scope(request)
-        async with with_workspace(access.db, scope) as connection:
-            row = await (
-                await connection.execute(
-                    "SELECT id,name,enabled,observed_state,version,failure_streak,success_streak "
-                    "FROM monitors WHERE workspace_id=%s AND id=%s",
-                    (scope.id, monitor_id),
-                )
-            ).fetchone()
-        if row is None:
-            raise HttpError(404, "NOT_FOUND", "Serviço não encontrado.")
-        return row
+        return await access.monitors.get(scope, str(monitor_id))
 
     return router

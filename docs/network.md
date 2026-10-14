@@ -1,7 +1,7 @@
 # Executor HTTP
 
-O transporte já realiza chamadas HTTP reais. A gravação de resultados e as regras
-de incidentes serão ligadas a ele na etapa seguinte. Não há verificação em
+O transporte realiza chamadas HTTP reais e grava resultados e transições de
+incidente pelo serviço integrado. Não há verificação em
 background na demonstração.
 
 ## Destinos

@@ -14,7 +14,7 @@ A fundação implementa configuração estrita, conexões PostgreSQL com TLS ver
 em produção, migrations transacionais com checksum e `/health/ready`.
 Não aplica migrations nem cria usuários durante o startup.
 
-Passaram 127 testes locais. Os testes de integração usam o banco `sonda_test`
+Passaram 144 testes locais. Os testes de integração usam o banco `sonda_test`
 e schemas temporários próprios.
 Um processo HTTP separado verifica prontidão 503 antes das migrations e 200 depois,
 sem reiniciar o servidor. Testes também verificam configuração de produção,
@@ -41,8 +41,17 @@ comandos, quotas e resultados imutáveis. A disputa por monitor e quota foi
 verificada entre processos separados, com bloqueio observado e controle negativo.
 [Invariantes e evidências das verificações](docs/checks.md).
 
-O comando HTTP integrado, as regras de incidentes e a interface ainda não estão
-implementados.
+O percurso HTTP integrado já verifica o alvo, abre um incidente após duas falhas,
+registra reconhecimento com comentário e confirma recuperação após dois sucessos.
+Resultados, estado e eventos são gravados atomicamente; eventos e evidências
+finalizadas não podem ser reescritos. Esse ciclo passou em um processo real do
+Sonda, com isolamento, replay e conflito de versão.
+
+O runner executa uma vez, em lotes de até dez monitores administrados, com
+SKIP LOCKED e até quatro execuções simultâneas. Não executa demos em background.
+Dois processos verificaram lotes distintos, sem repetir o mesmo monitor.
+
+A interface, CI e demonstração hospedada ainda não estão implementadas.
 Não há demonstração publicada ou resultado comercial a alegar.
 
 ## Executar a fundação
@@ -84,6 +93,23 @@ os limites entre gerações. Iniciar uma demo também tenta uma coleta de até 1
 registros por categoria, no máximo uma vez por minuto pelo relógio do banco.
 
 [Contrato de acesso HTTP](docs/contracts/http.md).
+
+## Alvos e execução administrada
+
+Configure `SONDA_ALLOWED_HOSTS` com hostnames exatos, separados por vírgula.
+`python -m scripts.install_monitor` recebe JSON por stdin com `name`, `target_url`
+e `interval_seconds` (mínimo 60). Exige um operador normal já instalado.
+Alvos são HTTPS na porta 443, sem credenciais, query ou fragmento.
+Repetir a mesma configuração é idempotente. Para mudar alvo ou intervalo, crie
+outro registro: a evidência anterior permanece vinculada ao alvo que foi medido.
+Pausa e retomada ficam disponíveis na API.
+
+```powershell
+./.venv/Scripts/python.exe -m scripts.run_due --once --batch 10
+```
+
+Esse comando pode ser agendado pelo operador em sua instalação. O servidor
+HTTP não inicia loop ou tarefa de background e a demo pública será manual.
 
 Para testar, configure `SONDA_TEST_DATABASE_URL` com uma role e banco separados
 `sonda_test` em localhost, além das demais variáveis de teste. No ambiente local

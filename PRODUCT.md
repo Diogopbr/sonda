@@ -8,9 +8,8 @@ web
 
 ## Stack
 
-Python/FastAPI, TypeScript e PostgreSQL fazem parte do conceito aprovado da coleção.
-A escolha de Svelte para a interface é uma decisão técnica sob a autonomia delegada;
-as versões e o runtime serão fixados no plano após conferir compatibilidade.
+Python 3.13/FastAPI e PostgreSQL 17 no backend; Svelte e TypeScript na interface.
+Dependências de backend já estão fixadas; a interface está planejada.
 
 ## Users
 
@@ -48,7 +47,9 @@ banco gratuito separado, documentação útil e dados fictícios identificados.
 ## Evidence on Hand
 
 O conceito foi aprovado na coleção. A pasta4 estava vazia na inspeção inicial.
-Ainda não há código, testes, CI, banco próprio ou aplicação publicada do Sonda.
+Backend e banco local próprios implementados, com 144 testes locais: acesso,
+transporte HTTP, leases, incidentes, eventos e runner. O ciclo real de falha e
+recuperação passou por HTTP. Interface, CI e runtime hospedado ainda não existem.
 
 ## Product Principles
 

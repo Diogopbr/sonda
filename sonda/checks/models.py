@@ -28,6 +28,7 @@ class CheckProjection:
     abandon_reason: str | None
     started_at: datetime
     finished_at: datetime | None
+    origin: Literal["manual", "runner"] = "manual"
 
 
 def claim_projection(row: dict[str, Any], *, replayed: bool) -> Claim:
@@ -54,4 +55,5 @@ def check_projection(row: dict[str, Any]) -> CheckProjection:
         row["abandon_reason"],
         row["started_at"],
         row["finished_at"],
+        row["origin"],
     )

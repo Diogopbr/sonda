@@ -1,7 +1,7 @@
 # Tentativas, leases e resultados
 
-Esta etapa implementa os serviços de persistência. O comando HTTP para executar
-uma verificação e as transições de incidentes serão ligados a eles na etapa seguinte.
+Os serviços de persistência, comando HTTP integrado e transições de incidentes
+estão implementados. A interface e o runtime hospedado ainda serão verificados.
 
 ## Claim e repetição
 
@@ -29,7 +29,8 @@ revogado ou de outro visitante recebe 404. Não altera resultado ou contadores.
 
 A finalização grava os campos de resultado e libera o lease na mesma transação.
 Um erro injetado na atualização do monitor reverte o resultado para pending.
-As regras de saúde e incidentes serão adicionadas nessa mesma transação.
+Estado observado, sequências, incidente e eventos também fazem parte dessa
+transação. Uma falha injetada no evento reverte todas essas alterações.
 
 ## Invariantes no banco
 
@@ -63,3 +64,35 @@ anterior à espera falhou nesse teste antes da correção.
 Uma disputa da mesma chave em dois monitores espera pelo lock da chave e devolve
 IDEMPOTENCY_CONFLICT ao segundo. Testes também cobrem replay finalizado, perda de
 lease, pausa, reset, isolamento, FKs, limite de frequência e rollback.
+
+## Incidentes
+
+Duas falhas consecutivas confirmam indisponibilidade e abrem um incidente único,
+com a primeira falha e a verificação que confirmou a sequência. Uma primeira
+falha não inventa indisponibilidade confirmada. Abandono não altera a saúde.
+
+O reconhecimento registra um comentário de 3 a 500 caracteres, inclusive quebras
+de linha, ator e horário. Ocorre uma vez, com versão atual. Um conflito devolve
+os dados atuais; o comentário enviado não substitui o anterior.
+Reconhecimento mantém o incidente ativo. Dois sucessos consecutivos confirmam
+recuperação e o resolvem; sucesso seguido de falha mantém o incidente aberto.
+Incidente resolvido é somente leitura e conserva suas evidências.
+
+Uma consulta única monta cada projeção de monitor ou incidente com resultado,
+evidências e eventos, evitando misturar snapshots de versões diferentes.
+O detalhe do monitor devolve até 60 tentativas mais recentes, limite explícito;
+todos os resultados continuam armazenados. A demo inteira tem quota de 60.
+O detalhe também mantém acesso aos 20 incidentes mais recentes, incluindo
+resolvidos; recuperar o serviço não faz sua evidência desaparecer da navegação.
+
+## Runner
+
+Somente ambientes normais entram em `run-due --once`. A seleção usa
+FOR UPDATE SKIP LOCKED, lote máximo dez, chaves UUID geradas pelo servidor e o
+mesmo serviço de claim/finalização. Próxima execução é definida depois do claim,
+com intervalo mínimo de 60 segundos. A transação termina antes da rede.
+Até quatro verificações são executadas simultaneamente no lote.
+
+O teste com dois processos mantém o primeiro lote bloqueado e comprova que o
+segundo termina com os monitores restantes antes de liberar o primeiro.
+Nenhum endpoint público dispara o runner e não há cron contratado na Vercel.

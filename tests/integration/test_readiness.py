@@ -33,6 +33,7 @@ async def test_migration_is_idempotent_and_rejects_changed_applied_content(db: D
             "001_access.sql",
             "002_monitors.sql",
             "003_checks.sql",
+            "004_incidents.sql",
         }
         await connection.execute("UPDATE schema_migrations SET hash='tampered'")
     import pytest

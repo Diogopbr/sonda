@@ -1,1 +1,1 @@
-LATEST_MIGRATION = "003_checks.sql"
+LATEST_MIGRATION = "004_incidents.sql"
