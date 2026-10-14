@@ -66,13 +66,24 @@ async def test_old_password_verification_cannot_issue_session_after_password_cha
 
 
 async def test_login_limit_uses_database_counter(db: Database) -> None:
+    from sonda.access.limits import ip_key
+
     await migrate(db)
     login = LoginService(db)
-    for _ in range(10):
+    for _ in range(21):
         with pytest.raises(HttpError) as caught:
             await login.login("ausente@example.com", "senha longa de teste", "127.0.0.1")
+        if caught.value.status_code == 429:
+            assert caught.value.retry_after is not None and 1 <= caught.value.retry_after <= 60
+            break
         assert caught.value.status_code == 401
-    with pytest.raises(HttpError) as caught:
-        await login.login("ausente@example.com", "senha longa de teste", "127.0.0.1")
-    assert caught.value.status_code == 429
-    assert caught.value.retry_after is not None and 1 <= caught.value.retry_after <= 60
+    else:
+        raise AssertionError("Login limit was never observed")
+    async with db.connection() as connection:
+        row = await (
+            await connection.execute(
+                "SELECT max(hits) AS hits FROM rate_limits WHERE key=%s",
+                (ip_key("login:ip", "127.0.0.1"),),
+            )
+        ).fetchone()
+        assert row is not None and row["hits"] == 10

@@ -47,10 +47,32 @@ async def test_reset_revokes_generation_keeps_visitor_and_limits_second_reset(db
             )
         ).fetchone()
         assert old and old["revoked_at"] is not None
-    with pytest.raises(HttpError) as caught:
-        await service.reset(second.scope, token, "203.0.113.11")
-    assert caught.value.status_code == 429
-    assert caught.value.retry_after is not None and 1 <= caught.value.retry_after <= 60
+    key = f"reset:visitor:{second.scope.visitor_id}"
+    for _ in range(3):
+        async with db.connection() as connection:
+            before = await (
+                await connection.execute(
+                    "SELECT bucket,hits FROM rate_limits WHERE key=%s ORDER BY bucket DESC LIMIT 1",
+                    (key,),
+                )
+            ).fetchone()
+        assert before is not None
+        try:
+            second = await service.reset(second.scope, token, "203.0.113.11")
+        except HttpError as error:
+            assert error.status_code == 429
+            assert error.retry_after is not None and 1 <= error.retry_after <= 60
+            break
+        async with db.connection() as connection:
+            after = await (
+                await connection.execute(
+                    "SELECT bucket,hits FROM rate_limits WHERE key=%s ORDER BY bucket DESC LIMIT 1",
+                    (key,),
+                )
+            ).fetchone()
+        assert after is not None and after["bucket"] > before["bucket"] and after["hits"] == 1
+    else:
+        raise AssertionError("Reset limit was never observed")
 
 
 async def test_reset_checks_visitor_ownership_before_consuming_limits(db: Database) -> None:
