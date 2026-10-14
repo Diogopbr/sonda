@@ -1,8 +1,14 @@
-from fastapi import FastAPI
+from collections.abc import Awaitable, Callable
+
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 
 from sonda.config import Settings
 from sonda.db import Database
+from sonda.http.access import Access, access_router
+from sonda.http.body import BodyLimitMiddleware
+from sonda.http.errors import HttpError, error_response
 from sonda.http.gateway import GatewayMiddleware
 from sonda.http.security import SecurityHeadersMiddleware
 from sonda.version import LATEST_MIGRATION
@@ -10,8 +16,23 @@ from sonda.version import LATEST_MIGRATION
 
 def create_app(settings: Settings, db: Database) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
+    app.add_middleware(BodyLimitMiddleware)
     app.add_middleware(GatewayMiddleware, settings=settings)
     app.add_middleware(SecurityHeadersMiddleware)
+    app.include_router(access_router(Access(settings, db)))
+
+    @app.exception_handler(HttpError)
+    async def domain_error(request: Request, error: HttpError) -> JSONResponse:
+        return error_response(error)
+
+    @app.middleware("http")
+    async def private_responses(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/health/ready")
     async def ready() -> JSONResponse:

@@ -14,13 +14,24 @@ A fundação implementa configuração estrita, conexões PostgreSQL com TLS ver
 em produção, migrations transacionais com checksum e `/health/ready`.
 Não aplica migrations nem cria usuários durante o startup.
 
-Passaram 25 testes locais. Os testes de integração usam o banco `sonda_test`
+Passaram 64 testes locais. Os testes de integração usam o banco `sonda_test`
 e schemas temporários próprios.
 Um processo HTTP separado verifica prontidão 503 antes das migrations e 200 depois,
 sem reiniciar o servidor. Testes também verificam configuração de produção,
 isolamento da seleção de schema e tratamento explícito de headers de proxy.
 
-Sessões, verificações HTTP, incidentes e interface ainda não estão implementados.
+O acesso implementa sessões persistentes, demos com duração fixa de 24 horas,
+quatro monitores inicialmente desconhecidos e isolamento entre visitantes.
+Dois processos HTTP separados recuperam a mesma sessão pelo PostgreSQL.
+Escritas exigem origem exata e CSRF; comandos de uma geração antiga são recusados.
+Reset troca a geração e invalida o acesso anterior.
+
+Instalações administradas usam scrypt salgado, login limitado por IP e sessões
+regeneradas. Alterar a senha revoga o acesso anterior, inclusive quando uma
+verificação da senha antiga ainda está em andamento. A coleta usa lotes limitados
+e pula ambientes com operações em andamento.
+
+Verificações HTTP, incidentes e interface ainda não estão implementados.
 Não há demonstração publicada ou resultado comercial a alegar.
 
 ## Executar a fundação
@@ -45,6 +56,23 @@ Produção exige `SONDA_ENV=production`, HTTPS e `DB_TLS=true`.
 
 O servidor local usa `127.0.0.1:5095`. A factory de loop local é compatível com
 psycopg no Windows; não altera a instalação global do Python.
+
+## Acesso administrado e coleta
+
+Após aplicar as migrations, `python -m scripts.install_user` recebe exclusivamente
+um objeto JSON por stdin com `email`, `name` e `password`. Não passe credenciais em
+argumentos de terminal. O nome tem 3 a 80 caracteres e a senha, 12 a 128, sem
+caracteres de controle. Não existe senha padrão ou cadastro público.
+Reexecutar o comando para o mesmo email atualiza a senha e revoga suas sessões.
+Habilite `SONDA_LOGIN_ENABLED=true` para oferecer login HTTP.
+
+`python -m scripts.cleanup --batch 10` executa uma coleta, com máximo de 1.000
+registros por categoria. Só remove ambientes demo expirados ou revogados,
+sessões vencidas e contadores vencidos. A identidade do visitante permanece para
+os limites entre gerações. Iniciar uma demo também tenta uma coleta de até 10
+registros por categoria, no máximo uma vez por minuto pelo relógio do banco.
+
+[Contrato de acesso HTTP](docs/contracts/http.md).
 
 Para testar, configure `SONDA_TEST_DATABASE_URL` com uma role e banco separados
 `sonda_test` em localhost, além das demais variáveis de teste. No ambiente local

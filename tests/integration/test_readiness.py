@@ -29,7 +29,7 @@ async def test_migration_is_idempotent_and_rejects_changed_applied_content(db: D
     await migrate(db)
     async with db.transaction() as connection:
         rows = await (await connection.execute("SELECT version FROM schema_migrations")).fetchall()
-        assert len(rows) == 1
+        assert {row["version"] for row in rows} == {"001_access.sql", "002_monitors.sql"}
         await connection.execute("UPDATE schema_migrations SET hash='tampered'")
     import pytest
 
