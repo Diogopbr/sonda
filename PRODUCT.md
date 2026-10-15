@@ -48,7 +48,7 @@ banco gratuito separado, documentação útil e dados fictícios identificados.
 
 Backend e banco próprios implementados, com 147 testes locais: acesso,
 transporte HTTP, leases, incidentes, eventos e runner. O ciclo real de falha e
-recuperação passou por HTTP. Interface Svelte implementada: 19 testes e cinco
+recuperação passou por HTTP. Interface Svelte implementada: 20 testes e cinco
 percursos de navegador com API, PostgreSQL e chamadas HTTP reais. Desktop e
 celular foram inspecionados e o ajuste pedido na revisão visual foi aceito.
 As duas correções importantes da revisão técnica foram verificadas. Os seis

@@ -59,7 +59,7 @@ incidentes. Selecionar uma observação identifica seu papel na primeira falha,
 confirmação ou recuperação. Conflitos entre abas exigem revisão explícita e
 preservam comentários; reiniciar a demo invalida a geração anterior.
 
-Passaram 19 testes de interface e seis percursos locais de navegador, usando
+Passaram 20 testes de interface e seis percursos locais de navegador, usando
 PostgreSQL e requisições HTTP reais: ciclo completo, isolamento entre visitantes,
 conflito entre abas, reset com rascunho preservado e teclado no celular. As oito
 capturas de desktop e celular passaram na análise automatizada WCAG A/AA, sem
@@ -68,6 +68,9 @@ rolagem horizontal. Essas verificações não substituem a revisão independente
 A revisão independente encontrou dois problemas: HSTS no ingresso HTTPS e
 recuperação de conflito quando a atualização falha. Ambos foram corrigidos,
 verificados por regressões e aceitos na revisão das correções.
+O CI também expôs uma atualização tardia que sobrescrevia o cenário editado;
+um rascunho local explícito passou a preservar a escolha até a aplicação.
+A regressão foi reproduzida, corrigida e revisada independentemente.
 
 A demonstração está hospedada na Vercel com PostgreSQL Neon próprio. Os seis
 percursos passaram pela URL pública, com chamadas HTTPS reais. Cookies, CSRF,

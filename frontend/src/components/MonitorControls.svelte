@@ -17,16 +17,14 @@
     ) => Promise<void>;
     onReload: () => Promise<void>;
   } = $props();
-  let scenario = $state<'available' | 'unavailable'>('available');
+  let scenario = $state<'available' | 'unavailable' | null>(null);
+  const selectedScenario = $derived(scenario ?? monitor.fixture_mode ?? 'available');
   let busy = $state(false);
   let error = $state<unknown>(null);
   let message = $state('');
   let expired = $state(false);
   let conflict = $state(false);
   let alert: HTMLDivElement | undefined = $state();
-  $effect(() => {
-    if (!busy && !error) scenario = monitor.fixture_mode ?? 'available';
-  });
   async function operate(action: () => Promise<void | Check>): Promise<void> {
     busy = true;
     error = null;
@@ -103,15 +101,26 @@
   {#if monitor.target_kind === 'fixture'}
     <div class="scenario-form">
       <label for="scenario">Cenário do alvo fictício</label>
-      <select id="scenario" bind:value={scenario} disabled={busy || expired}>
+      <select
+        id="scenario"
+        value={selectedScenario}
+        onchange={(event) => {
+          scenario = event.currentTarget.value as 'available' | 'unavailable';
+        }}
+        disabled={busy || expired}
+      >
         <option value="available">Disponível · HTTP 200</option><option value="unavailable"
           >Indisponível · HTTP 503</option
         >
       </select>
       <button
         class="button secondary"
-        onclick={() => operate(() => onChange({ fixture_mode: scenario }, monitor.version))}
-        disabled={busy || expired || scenario === monitor.fixture_mode || conflict}
+        onclick={() =>
+          operate(async () => {
+            await onChange({ fixture_mode: selectedScenario }, monitor.version);
+            scenario = null;
+          })}
+        disabled={busy || expired || selectedScenario === monitor.fixture_mode || conflict}
         >Aplicar cenário</button
       >
       <p class="field-help">
