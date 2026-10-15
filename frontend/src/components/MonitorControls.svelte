@@ -58,6 +58,7 @@
       conflict = false;
     } catch (cause) {
       error = cause;
+      expired = expired || (cause instanceof ApiError && cause.status === 404);
       await tick();
       alert?.focus();
     }

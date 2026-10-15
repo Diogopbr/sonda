@@ -22,14 +22,14 @@
 
   async function fail(cause: unknown): Promise<void> {
     error = errorMessage(cause);
-    conflict = cause instanceof ApiError && cause.status === 409;
-    expired = cause instanceof ApiError && cause.status === 404;
+    conflict = conflict || (cause instanceof ApiError && cause.status === 409);
+    expired = expired || (cause instanceof ApiError && cause.status === 404);
     await tick();
     alert?.focus();
   }
   async function submit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
-    if (busy || expired || incident.state !== 'open') return;
+    if (busy || conflict || expired || incident.state !== 'open') return;
     const comment = draft;
     const version = incident.version;
     busy = true;

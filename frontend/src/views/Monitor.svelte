@@ -25,7 +25,7 @@
   const selectedEvidence = $derived(
     selected ? evidenceRole(selected, monitor?.incidents ?? []) : null,
   );
-  async function load(): Promise<void> {
+  async function load(requireFresh = false): Promise<void> {
     try {
       const next = await gate.run(`${workspace.workspace_id}:${id}`, (signal) =>
         api.read<MonitorDetail>(`/api/monitors/${id}`, workspace.workspace_id, signal),
@@ -35,11 +35,17 @@
         error = null;
         loading = false;
         if (!selected) selected = next.checks[0]?.id ?? null;
+      } else if (requireFresh) {
+        throw new Error('A leitura foi substituída. Revise os dados novamente.');
       }
     } catch (cause) {
       error = cause;
       loading = false;
+      if (requireFresh) throw cause;
     }
+  }
+  async function refresh(): Promise<void> {
+    await load(true);
   }
   async function check(): Promise<Check> {
     const result = await verify(workspace.workspace_id, id);
@@ -67,7 +73,10 @@
 </script>
 
 <a class="back-link" href="/services">Voltar ao registro de serviços</a>
-<Notice {error} onReload={error instanceof ApiError && error.status === 404 ? onCurrent : load} />
+<Notice
+  {error}
+  onReload={error instanceof ApiError && error.status === 404 ? onCurrent : refresh}
+/>
 {#if loading && !monitor}<p class="loading-records" role="status">
     Carregando o registro do serviço…
   </p>{/if}
@@ -169,7 +178,7 @@
       </section>
     </div>
     <aside class="control-area">
-      <MonitorControls {monitor} onVerify={check} onChange={change} onReload={load} />
+      <MonitorControls {monitor} onVerify={check} onChange={change} onReload={refresh} />
     </aside>
   </div>
 {/if}

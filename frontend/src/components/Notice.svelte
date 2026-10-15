@@ -3,6 +3,14 @@
   import { errorMessage, ApiError } from '../lib/api';
   let { error, onReload }: { error: unknown; onReload?: () => void | Promise<void> } = $props();
   let node: HTMLDivElement | undefined = $state();
+  async function reload(): Promise<void> {
+    try {
+      await onReload?.();
+    } catch {
+      await tick();
+      node?.focus();
+    }
+  }
   $effect(() => {
     if (error) void tick().then(() => node?.focus());
   });
@@ -14,7 +22,7 @@
     {#if error instanceof ApiError && error.retryAfter}<p>
         Aguarde {error.retryAfter} segundos antes de repetir.
       </p>{/if}
-    {#if onReload}<button class="button secondary" onclick={onReload}>Revisar dados atuais</button
+    {#if onReload}<button class="button secondary" onclick={reload}>Revisar dados atuais</button
       >{/if}
   </div>
 {/if}

@@ -14,7 +14,7 @@ A fundação implementa configuração estrita, conexões PostgreSQL com TLS ver
 em produção, migrations transacionais com checksum e `/health/ready`.
 Não aplica migrations nem cria usuários durante o startup.
 
-Passaram 146 testes locais de backend. Os testes de integração usam o banco `sonda_test`
+Passaram 147 testes locais de backend. Os testes de integração usam o banco `sonda_test`
 e schemas temporários próprios.
 Um processo HTTP separado verifica prontidão 503 antes das migrations e 200 depois,
 sem reiniciar o servidor. Testes também verificam configuração de produção,
@@ -56,16 +56,25 @@ incidentes. Selecionar uma observação identifica seu papel na primeira falha,
 confirmação ou recuperação. Conflitos entre abas exigem revisão explícita e
 preservam comentários; reiniciar a demo invalida a geração anterior.
 
-Passaram 19 testes de interface e cinco percursos locais de navegador, usando
+Passaram 19 testes de interface e seis percursos locais de navegador, usando
 PostgreSQL e requisições HTTP reais: ciclo completo, isolamento entre visitantes,
 conflito entre abas, reset com rascunho preservado e teclado no celular. As oito
 capturas de desktop e celular passaram na análise automatizada WCAG A/AA, sem
 rolagem horizontal. Essas verificações não substituem a revisão independente.
 
-A revisão independente, CI e demonstração hospedada ainda estão pendentes.
+A revisão independente encontrou dois problemas: HSTS no ingresso HTTPS e
+recuperação de conflito quando a atualização falha. As correções têm regressões
+que reproduzem as falhas. CI e demonstração hospedada ainda estão pendentes.
 Não há demonstração publicada ou resultado comercial a alegar.
 
-## Executar a fundação
+![Registro de serviços sem medições](docs/screenshots/services.png)
+
+![Verificações e evidências de um incidente](docs/screenshots/monitor.png)
+
+[Captura do incidente no celular](docs/screenshots/incident-mobile.png).
+[Origem e contexto das capturas](docs/screenshots/README.md).
+
+## Executar localmente
 
 Requisitos: Python 3.13, Node.js 24.15 e PostgreSQL 17. Crie um ambiente virtual e instale as
 dependências fixadas:
@@ -127,9 +136,9 @@ Esse comando pode ser agendado pelo operador em sua instalação. O servidor
 HTTP não inicia loop ou tarefa de background e a demo pública será manual.
 
 Para testar, configure `SONDA_TEST_DATABASE_URL` com uma role e banco separados
-`sonda_test` em localhost, além das demais variáveis de teste. No ambiente local
-da coleção, `scripts/bootstrap.ps1` prepara somente os bancos do Sonda;
-`scripts/local-env.ps1 -Test` carrega a configuração privada já criada.
+`sonda_test` em localhost, além das demais variáveis de teste. Essa role deve ser
+proprietária apenas do banco de testes, sem acesso ao banco da aplicação.
+Cada teste cria e remove somente seu próprio schema temporário.
 
 ```powershell
 ./.venv/Scripts/python.exe -m pytest
@@ -138,4 +147,15 @@ da coleção, `scripts/bootstrap.ps1` prepara somente os bancos do Sonda;
 ```
 
 As verificações acima são locais. CI e hospedagem serão comprovadas na etapa de
-publicação. [Regras do produto](docs/superpowers/specs/2026-10-13-sonda-design.md).
+publicação. [Regras do produto](docs/product.md).
+
+No Windows, `scripts/verify.ps1` executa a sequência completa com o ambiente de
+testes já configurado. Não carrega credenciais, provisiona banco ou altera a
+instalação global. [Arquitetura e decisões](docs/architecture.md) e
+[sistema visual](DESIGN.md) descrevem os contratos da implementação.
+
+No diretório `frontend`, `npm test` verifica o cliente e `npm run test:e2e`
+executa os percursos de navegador após `npm exec -- playwright install chromium`.
+O driver aplica migrations exclusivamente em um schema próprio de `sonda_test`;
+nunca prepara ou reseta o banco da aplicação. `npm run dev` recompila os assets
+ao editar o frontend; mantenha o servidor Python aberto e recarregue a página.

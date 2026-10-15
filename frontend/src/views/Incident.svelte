@@ -31,7 +31,7 @@
     INCIDENT_ACKNOWLEDGED: 'Investigação reconhecida',
     INCIDENT_RESOLVED: 'Recuperação confirmada',
   };
-  async function load(): Promise<void> {
+  async function load(requireFresh = false): Promise<void> {
     try {
       const next = await gate.run(`${workspace.workspace_id}:${id}`, async (signal) => {
         const record = await api.read<Incident>(
@@ -51,11 +51,17 @@
         monitor = next.service;
         error = null;
         loading = false;
+      } else if (requireFresh) {
+        throw new Error('A leitura foi substituída. Revise os dados novamente.');
       }
     } catch (cause) {
       error = cause;
       loading = false;
+      if (requireFresh) throw cause;
     }
+  }
+  async function refresh(): Promise<void> {
+    await load(true);
   }
   async function acknowledge(comment: string, version: number): Promise<void> {
     const saved = await api.write<IncidentSummary>(
@@ -92,7 +98,10 @@
   });
 </script>
 
-<Notice {error} onReload={error instanceof ApiError && error.status === 404 ? onCurrent : load} />
+<Notice
+  {error}
+  onReload={error instanceof ApiError && error.status === 404 ? onCurrent : refresh}
+/>
 {#if loading && !incident}<p role="status" class="loading-records">
     Carregando as evidências do incidente…
   </p>{/if}
@@ -135,7 +144,7 @@
           {/each}
         </ol>
       </section>
-      <AcknowledgementForm {incident} onAcknowledge={acknowledge} onReload={load} />
+      <AcknowledgementForm {incident} onAcknowledge={acknowledge} onReload={refresh} />
       <section class="event-history">
         <h2>Histórico do incidente</h2>
         <ol class="event-list">
@@ -155,7 +164,7 @@
       </section>
     </div>
     <aside class="control-area">
-      <MonitorControls {monitor} onVerify={check} onChange={change} onReload={load} />
+      <MonitorControls {monitor} onVerify={check} onChange={change} onReload={refresh} />
     </aside>
   </div>
 {/if}

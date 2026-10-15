@@ -1,0 +1,80 @@
+name: Sonda verification
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.10
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-admin-fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SONDA_ENV: test
+      DATABASE_URL: postgresql://sonda_test:ci-test-fixture-only@127.0.0.1:5432/sonda_test
+      SONDA_TEST_DATABASE_URL: postgresql://sonda_test:ci-test-fixture-only@127.0.0.1:5432/sonda_test
+      DB_TLS: "false"
+      SESSION_SECRET: ci-session-fixture-only-never-use-in-production
+      PROBE_SECRET: ci-probe-fixture-only-never-use-in-production
+      APP_URL: http://127.0.0.1:5097
+      PORT: "5097"
+      SONDA_DEMO_ENABLED: "true"
+      SONDA_LOGIN_ENABLED: "false"
+      TRUST_VERCEL_INGRESS: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.15.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Create isolated databases and roles
+        env:
+          PGPASSWORD: ci-admin-fixture-only
+        run: |
+          psql --host=127.0.0.1 --username=postgres --dbname=postgres --set=ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE sonda LOGIN PASSWORD 'ci-main-fixture-only' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+          CREATE ROLE sonda_test LOGIN PASSWORD 'ci-test-fixture-only' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+          CREATE DATABASE sonda OWNER sonda;
+          CREATE DATABASE sonda_test OWNER sonda_test;
+          REVOKE CONNECT ON DATABASE sonda FROM PUBLIC;
+          REVOKE CONNECT ON DATABASE sonda_test FROM PUBLIC;
+          REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;
+          SQL
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: python -m ruff check sonda scripts tests
+      - run: python -m ruff format --check sonda scripts tests
+      - run: python -m mypy
+      - run: python -m pytest -q --tb=short
+      - run: npm ci
+        working-directory: frontend
+      - run: npm exec -- playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run format:check
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - run: git diff --check

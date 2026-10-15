@@ -1,9 +1,5 @@
 # Sonda — monitoramento HTTP e incidentes
 
-Data:13/10/2026. Conceito aprovado na coleção; detalhamento técnico elaborado sob
-a delegação do usuário para continuar sozinho e resolver decisões de execução.
-Não se registra uma aprovação humana específica deste arquivo.
-
 ## Objetivo e recorte
 
 Construir o quarto produto de portfólio, independente dos demais, com Python,
@@ -146,12 +142,7 @@ Detalhe de incidente com evidências que o abriram, comentário de reconheciment
 e verificação que o resolveu. Distinguir desconhecido, saudável, sequência de
 falhas, indisponível, recuperação em andamento e pausado por texto.
 
-Direção proposta: instrumento de operação, com registros alinhados e intervalos
-de observação explícitos. A escolha visual será persistida antes de implementar
-a interface, usando Impeccable sob a delegação existente. Não reutilizar sidebar,
-cards de indicadores ou composição dos outros três produtos. Mobile transforma
-linhas em registros, mantendo o conteúdo; teclado opera todas as ações.
-Formulários preservam comentários em409/404/rede, erros recebem foco e resposta
+A interface usa registros alinhados e uma sequência de observações reais. No celular, linhas viram registros com rótulos e há acesso direto aos controles. Formulários preservam comentários em409/404/rede, erros recebem foco e resposta
 fora de ordem não substitui dados de monitor ou geração diferente.
 
 ## Organização e implantação

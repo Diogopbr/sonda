@@ -27,4 +27,7 @@ htmlcov/
 /playwright-report/
 /AGENTS.md
 /docs/superpowers/plans/
+/docs/superpowers/specs/
+/scripts/bootstrap.ps1
+/scripts/local-env.ps1
 /docs/reviews/

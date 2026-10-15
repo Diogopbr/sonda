@@ -38,6 +38,7 @@ class GatewayMiddleware:
                 return
             request_scope["client"] = (verified_ip, 0)
             request_scope["scheme"] = "https"
+            scope["scheme"] = "https"
         ignored = {
             b"forwarded",
             b"x-forwarded-for",

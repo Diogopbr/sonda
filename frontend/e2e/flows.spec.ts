@@ -84,10 +84,34 @@ test('stale acknowledgement preserves draft and requires explicit review', async
   await other.getByRole('button', { name: 'Reconhecer incidente' }).click();
   await expect(other.getByRole('alert')).toBeFocused();
   await expect(other.getByLabel('Comentário de investigação')).toHaveValue('Rascunho da segunda aba.');
+  await context.setOffline(true);
   await other.getByRole('button', { name: 'Revisar dados atuais' }).click();
+  await expect(other.getByRole('button', { name: 'Reconhecer incidente' })).toBeDisabled();
+  await expect(other.locator('.acknowledgement').getByRole('button', { name: 'Revisar dados atuais' })).toBeVisible();
+  await expect(other.getByLabel('Comentário de investigação')).toHaveValue('Rascunho da segunda aba.');
+  await context.setOffline(false);
+  await other.locator('.acknowledgement').getByRole('button', { name: 'Revisar dados atuais' }).click();
   await expect(other.getByLabel('Rascunho não enviado')).toHaveValue('Rascunho da segunda aba.');
   await expect(other.getByText('Analisando o serviço na primeira aba.', { exact: true })).toBeVisible();
   await accessible(other);
+});
+
+test('a conflict refresh after reset keeps the draft and prevents stale submission', async ({ page, context }) => {
+  await start(page); await service(page); const incident = await openIncident(page);
+  const other = await context.newPage(); await other.goto(incident);
+  await other.getByLabel('Comentário de investigação').fill('Investigação ainda não enviada.');
+  await page.getByLabel('Comentário de investigação').fill('Registro confirmado na primeira aba.');
+  await page.getByRole('button', { name: 'Reconhecer incidente' }).click();
+  await expect(page.getByText('Reconhecido', { exact: true })).toBeVisible();
+  await other.getByRole('button', { name: 'Reconhecer incidente' }).click();
+  await expect(other.getByRole('button', { name: 'Reconhecer incidente' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Reiniciar demo' }).click();
+  await page.getByRole('button', { name: 'Reiniciar ambiente', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Registro de serviços' })).toBeVisible();
+  await other.locator('.acknowledgement').getByRole('button', { name: 'Revisar dados atuais' }).click();
+  await expect(other.getByLabel('Rascunho não enviado')).toHaveValue('Investigação ainda não enviada.');
+  await expect(other.getByRole('button', { name: 'Reconhecer incidente' })).toHaveCount(0);
+  await expect(other.locator('.acknowledgement').getByRole('alert')).toBeFocused();
 });
 
 test('reset dialog contains focus, restores it on cancel and old-tab commands keep their draft', async ({ page, context }) => {

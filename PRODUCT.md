@@ -47,7 +47,7 @@ banco gratuito separado, documentação útil e dados fictícios identificados.
 ## Evidence on Hand
 
 O conceito foi aprovado na coleção. A pasta4 estava vazia na inspeção inicial.
-Backend e banco local próprios implementados, com 146 testes locais: acesso,
+Backend e banco local próprios implementados, com 147 testes locais: acesso,
 transporte HTTP, leases, incidentes, eventos e runner. O ciclo real de falha e
 recuperação passou por HTTP. Interface Svelte implementada: 19 testes e cinco
 percursos de navegador com API, PostgreSQL e chamadas HTTP reais. Desktop e
