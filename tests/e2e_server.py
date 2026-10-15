@@ -99,7 +99,7 @@ def main() -> None:
     try:
         asyncio.run(setup(settings, arguments.schema), loop_factory=asyncio.SelectorEventLoop)
         app = create_app(
-            settings, Database(settings, arguments.schema), assets_directory=ROOT / "public"
+            settings, Database(settings, arguments.schema), assets_directory=ROOT / "web_dist"
         )
         uvicorn.run(
             app,

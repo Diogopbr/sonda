@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [svelte(), svelteTesting()],
-  build: { outDir: '../public', emptyOutDir: true },
+  build: { outDir: '../web_dist', emptyOutDir: true },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],

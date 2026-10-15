@@ -12,6 +12,7 @@
 /frontend/test-results/
 /frontend/playwright-report/
 /public/
+/web_dist/
 /docs/
 /tests/
 /scripts/bootstrap.ps1

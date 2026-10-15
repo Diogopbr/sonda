@@ -3,7 +3,12 @@
 O projeto usa o framework FastAPI da Vercel, com entrypoint `sonda.main:app` e
 função em `gru1`. Python é limitado a 3.13. O `uv.lock` mantém as mesmas versões
 de runtime verificadas em `requirements.txt`, incluindo marcadores de plataforma.
-O build instala o frontend pelo lockfile e gera `public/`; não aplica migrations.
+O build instala o frontend pelo lockfile e gera `web_dist/`; não aplica migrations.
+
+O HTML precisa permanecer no pacote Python para atender as rotas conhecidas.
+O empacotador exclui diretórios `public/` da função, por isso o build usa um
+diretório próprio. Somente os subdiretórios públicos são montados e promovidos
+ao CDN; o diretório inteiro da aplicação não é exposto.
 
 As pastas `assets/` e `fonts/` são públicas. Apenas rotas HTML conhecidas entregam
 o documento da aplicação. Nenhum diretório de código, configuração privada ou

@@ -21,7 +21,7 @@ if (
 app = create_app(
     settings,
     Database(settings, sys.argv[1]),
-    assets_directory=Path(__file__).resolve().parents[2] / "public",
+    assets_directory=Path(__file__).resolve().parents[2] / "web_dist",
 )
 uvicorn.run(
     app,
