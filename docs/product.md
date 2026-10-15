@@ -175,14 +175,14 @@ Free. Credenciais administrativas usadas somente no provisionamento e migrations
    preservados e axe. Capturas reais e revisão independente, em rodadas limitadas.
 8. CI, build e runtime hospedado; chamadas HTTPS reais às fixtures, arquivos
    privados404, TLS/permissões do banco e sessão/dados após redeploy. GitHub público
-   só após revisão. LinkedIn fica em rascunho separado até publicação autorizada.
+   após revisão.
 
 ## Limites e decisões em aberto
 
 Não há notificações externas, websockets, tracing distribuído, agentes em máquinas,
 scripts de usuário, cobrança, TLS privado ou monitoramento contínuo na demo.
-Versões exatas, empacotamento Vercel e estrutura de assets serão fechados no plano
-com fontes oficiais. Não há resultados comerciais ou usuários a alegar.
+Versões exatas estão nos lockfiles; empacotamento e assets são descritos em
+[implantação](deployment.md). Não há resultados comerciais ou usuários a alegar.
 
 Configuração: SONDA_ENV=development/test/production, APP_URL, DATABASE_URL,
 DB_TLS, SESSION_SECRET e PROBE_SECRET. Produção exige HTTPS, TLS verificado,

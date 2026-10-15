@@ -40,8 +40,25 @@ Reescrever um resultado finalizado também foi recusado. A remoção do ambiente
 exclusivo dessa verificação coletou suas evidências por cascade, sem tocar dados
 de outros ambientes.
 
-Build remoto, CI, navegação HTTPS, cookies, fluxo completo e persistência após
-redeploy ainda precisam de verificação própria antes de declarar a demo publicada.
+## Demonstração verificada
+
+URL pública: https://sonda-diogopbr.vercel.app.
+
+O build remoto instalou Python 3.13 pelo `pyproject.toml`, dependências pelo
+`uv.lock` e frontend pelo `package-lock.json`. A função está em `gru1`.
+Os seis percursos Playwright passaram pela URL pública em 41,8 segundos:
+ciclo completo, isolamento, conflito com falha de rede e recuperação, conflito
+com reset, foco do diálogo e teclado no celular. As chamadas às fixtures são HTTPS
+reais; a aplicação não fornece resultados simulados ao executor.
+
+Cookies `Secure`, `HttpOnly` e `SameSite=Lax` foram conferidos. Uma escrita sem
+CSRF retornou 419. Os caminhos privados testados retornaram 404. Uma sessão com
+incidente resolvido foi salva antes de novo deploy e reutilizada depois: mesma
+geração, validade fixa, comentário, cinco observações e referências de evidência.
+
+O GitHub Actions verifica Python, tipagem, formatação, PostgreSQL isolado,
+interface, build e os seis percursos locais. O resultado de cada revisão fica
+disponível em [Actions](https://github.com/Diogopbr/sonda/actions).
 
 Referências: [FastAPI na Vercel](https://vercel.com/docs/frameworks/backend/fastapi)
 e [runtime Python](https://vercel.com/docs/functions/runtimes/python).

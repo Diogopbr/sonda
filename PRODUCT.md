@@ -31,7 +31,7 @@ A interface apresenta os registros que sustentam cada estado.
 
 ## Operating Context
 
-A demonstração pública terá ambientes separados por visitante, com alvos fictícios
+A demonstração pública tem ambientes separados por visitante, com alvos fictícios
 controlados pelo próprio projeto e chamadas HTTP reais. Falhas são provocadas
 explicitamente para permitir experimentar o ciclo completo.
 Uma instalação administrada poderá verificar alvos previamente autorizados.
@@ -40,18 +40,20 @@ Uma instalação administrada poderá verificar alvos previamente autorizados.
 
 Sem cadastro de URLs arbitrárias por visitantes, notificações externas, cobrança,
 monitoramento de redes privadas, scripts de usuário ou promessa de operação24h.
-A versão pública oferece verificações manuais; um runner explícito atenderá
+A versão pública oferece verificações manuais; um runner explícito atende
 verificações programadas na instalação administrada. Deploy visual na Vercel,
 banco gratuito separado, documentação útil e dados fictícios identificados.
 
 ## Evidence on Hand
 
-O conceito foi aprovado na coleção. A pasta4 estava vazia na inspeção inicial.
-Backend e banco local próprios implementados, com 147 testes locais: acesso,
+Backend e banco próprios implementados, com 147 testes locais: acesso,
 transporte HTTP, leases, incidentes, eventos e runner. O ciclo real de falha e
 recuperação passou por HTTP. Interface Svelte implementada: 19 testes e cinco
 percursos de navegador com API, PostgreSQL e chamadas HTTP reais. Desktop e
-celular foram inspecionados; revisão independente, CI e runtime hospedado pendentes.
+celular foram inspecionados e o ajuste pedido na revisão visual foi aceito.
+As duas correções importantes da revisão técnica foram verificadas. Os seis
+percursos também passaram no runtime público; sessão e evidências sobreviveram
+a um novo deploy. O resultado de cada commit no CI é registrado no GitHub Actions.
 
 ## Product Principles
 

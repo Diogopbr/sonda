@@ -1,7 +1,10 @@
 # Sonda
 
 Monitoramento HTTP e registro de incidentes com Python/FastAPI, TypeScript e
-PostgreSQL. Projeto de portfólio de Diogo Pereira, em implementação.
+PostgreSQL. Projeto de portfólio de Diogo Pereira.
+
+[Experimentar a demonstração](https://sonda-diogopbr.vercel.app) ·
+[Verificações automatizadas](https://github.com/Diogopbr/sonda/actions)
 
 O percurso definido verifica um serviço, abre um incidente após duas falhas
 consecutivas, registra o reconhecimento de um operador e confirma a recuperação
@@ -63,9 +66,13 @@ capturas de desktop e celular passaram na análise automatizada WCAG A/AA, sem
 rolagem horizontal. Essas verificações não substituem a revisão independente.
 
 A revisão independente encontrou dois problemas: HSTS no ingresso HTTPS e
-recuperação de conflito quando a atualização falha. As correções têm regressões
-que reproduzem as falhas. CI e demonstração hospedada ainda estão pendentes.
-Não há demonstração publicada ou resultado comercial a alegar.
+recuperação de conflito quando a atualização falha. Ambos foram corrigidos,
+verificados por regressões e aceitos na revisão das correções.
+
+A demonstração está hospedada na Vercel com PostgreSQL Neon próprio. Os seis
+percursos passaram pela URL pública, com chamadas HTTPS reais. Cookies, CSRF,
+arquivos privados inacessíveis e dados preservados após redeploy foram verificados.
+São dados fictícios de demonstração; não há resultado comercial a alegar.
 
 ![Registro de serviços sem medições](docs/screenshots/services.png)
 
@@ -133,7 +140,7 @@ Pausa e retomada ficam disponíveis na API.
 ```
 
 Esse comando pode ser agendado pelo operador em sua instalação. O servidor
-HTTP não inicia loop ou tarefa de background e a demo pública será manual.
+HTTP não inicia loop ou tarefa de background e a demo pública é manual.
 
 Para testar, configure `SONDA_TEST_DATABASE_URL` com uma role e banco separados
 `sonda_test` em localhost, além das demais variáveis de teste. Essa role deve ser
@@ -146,8 +153,9 @@ Cada teste cria e remove somente seu próprio schema temporário.
 ./.venv/Scripts/python.exe -m mypy
 ```
 
-As verificações acima são locais. CI e hospedagem serão comprovadas na etapa de
-publicação. [Regras do produto](docs/product.md).
+As verificações acima executam localmente e no GitHub Actions. A prova hospedada
+é separada, descrita em [implantação](docs/deployment.md).
+[Regras do produto](docs/product.md).
 
 No Windows, `scripts/verify.ps1` executa a sequência completa com o ambiente de
 testes já configurado. Não carrega credenciais, provisiona banco ou altera a
